@@ -5,9 +5,15 @@ class Program
     static void Main(string[] args)
     {
         string line = "=========================================";
-        var reference = new Reference("Proverbs", 3, 5, 6);
-        string scriptureText = "Trust in the Lord with all your heart and lean not on your own understanding.";
-        Scripture scripture = new Scripture(reference, scriptureText);
+        List<Scripture> scriptures = LoadScriptures("scriptures.txt");
+        if (scriptures.Count == 0)
+        {
+            Console.WriteLine("No scriptures found in the file. Please check 'scriptures.txt'.");
+            return;
+        }
+
+        Random rand = new Random();
+        Scripture scripture = scriptures[rand.Next(scriptures.Count)];
 
         while (!scripture.IsCompletelyHidden())
         {
@@ -20,7 +26,7 @@ class Program
             string input = Console.ReadLine();
             if (input.ToLower() == "quit") break;
 
-            scripture.HideRandomWords(2); 
+            scripture.HideRandomWords(2);
         }
 
         Console.Clear();
@@ -29,36 +35,41 @@ class Program
         Console.WriteLine("");
         Console.WriteLine(line);
     }
+
+    static List<Scripture> LoadScriptures(string filePath)
+    {
+        List<Scripture> scriptures = new List<Scripture>();
+        if (!File.Exists(filePath))
+        {
+            Console.WriteLine($"Error: The file '{filePath}' was not found.");
+            return scriptures;
+        }
+
+        string[] lines = File.ReadAllLines(filePath);
+        foreach (string line in lines)
+        {
+            string[] parts = line.Split(" | ");
+            if (parts.Length == 2)
+            {
+                Reference reference = new Reference(parts[0]);
+                scriptures.Add(new Scripture(reference, parts[1]));
+            }
+        }
+        return scriptures;
+    }
 }
 
 // Handles scripture reference details
 class Reference
 {
-    private string _book;
-    private int _chapter;
-    private int _verse;
-    private int? _endVerse; // Nullable for single verse references
+    private string _text;
 
-    public Reference(string book, int chapter, int verse)
+    public Reference(string text)
     {
-        _book = book;
-        _chapter = chapter;
-        _verse = verse;
-        _endVerse = null;
+        _text = text;
     }
 
-    public Reference(string book, int chapter, int verse, int endVerse)
-    {
-        _book = book;
-        _chapter = chapter;
-        _verse = verse;
-        _endVerse = endVerse;
-    }
-
-    public string GetDisplayText()
-    {
-        return _endVerse == null ? $"{_book} {_chapter}:{_verse}" : $"{_book} {_chapter}:{_verse}-{_endVerse}";
-    }
+    public string GetDisplayText() => _text;
 }
 
 // Represents a word in the scripture
@@ -103,7 +114,7 @@ class Scripture
         {
             int index = rand.Next(visibleWords.Count);
             visibleWords[index].Hide();
-            visibleWords.RemoveAt(index); // Ensure unique selection
+            visibleWords.RemoveAt(index);
         }
     }
 
